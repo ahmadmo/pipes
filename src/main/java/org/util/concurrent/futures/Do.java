@@ -53,12 +53,6 @@ public final class Do {
     }
 
     public static Promise<Void> runSerial(Runnable runnable) {
-        CompletableFuture<Void> future = CompletableFuture.runAsync(new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        });
         return new PromiseImpl<>(CompletableFuture.runAsync(runnable, SERIAL_EXECUTOR));
     }
 
