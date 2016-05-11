@@ -4,6 +4,7 @@ import org.util.concurrent.futures.Do;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author ahmad
@@ -44,23 +45,26 @@ public final class Pipeline {
     }
 
     public PipelineFuture start() {
-        List<PipePromise> promises = new ArrayList<>();
-        for (final Pipe pipe : pipes) {
-            Runnable r = () -> start(pipe);
-            promises.add(new PipePromiseImpl(pipe,
-                    pipe.isBlocking() ? Do.runSerial(r) : Do.runAsync(r))
-            );
-        }
-        return new PipelinePromiseImpl(this, promises);
+        return new PipelinePromiseImpl(
+                this,
+                pipes.stream()
+                        .map(pipe -> new PipePromiseImpl(
+                                pipe,
+                                pipe.isBlocking() ? Do.runSerial(runnable(pipe)) : Do.runAsync(runnable(pipe))
+                        ))
+                        .collect(Collectors.toList())
+        );
     }
 
-    private void start(Pipe pipe) {
-        PipeContext context = new PipeContext(pipe, this);
-        try {
-            pipe.getProcess().start(context);
-        } catch (Throwable cause) {
-            exceptionHandler.handle(new PipeException(cause, context));
-        }
+    private Runnable runnable(Pipe pipe) {
+        final PipeContext context = new PipeContext(pipe, this);
+        return () -> {
+            try {
+                pipe.getProcess().start(context);
+            } catch (Throwable cause) {
+                exceptionHandler.handle(new PipeException(cause, context));
+            }
+        };
     }
 
     public static Builder builder() {
