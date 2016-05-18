@@ -6,12 +6,11 @@ package org.util.concurrent.pipes;
 public final class PipeContext {
 
     private final Pipe pipe;
-    private final Pipeline pipeline;
     private final PipelineContext pipelineContext;
+    private final Channel channel = new ConcurrentChannel();
 
-    PipeContext(Pipe pipe, Pipeline pipeline, PipelineContext pipelineContext) {
+    PipeContext(Pipe pipe, PipelineContext pipelineContext) {
         this.pipe = pipe;
-        this.pipeline = pipeline;
         this.pipelineContext = pipelineContext;
     }
 
@@ -19,12 +18,20 @@ public final class PipeContext {
         return pipe;
     }
 
+    public PipelineContext pipelineContext() {
+        return pipelineContext;
+    }
+
     public Channel channel() {
-        return pipe.channel();
+        return channel;
+    }
+
+    public Pipeline pipeline() {
+        return pipelineContext.pipeline();
     }
 
     public boolean writeToChannel(int pipeIndex, Object message) {
-        return pipeline.pipeAt(pipeIndex).channel().write(message);
+        return pipelineContext.channel(pipeIndex).write(message);
     }
 
     public DataBus dataBus() {

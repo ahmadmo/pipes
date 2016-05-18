@@ -16,6 +16,8 @@ public final class Pipeline {
         throw e;
     };
 
+    final long id = Seq.next();
+
     private final List<Pipe> pipes = new ArrayList<>();
     private final Handler<PipeException> exceptionHandler;
 
@@ -23,7 +25,7 @@ public final class Pipeline {
         this.exceptionHandler = exceptionHandler == null ? DEFAULT_EXCEPTION_HANDLER : exceptionHandler;
     }
 
-    public List<Pipe> getPipes() {
+    public List<Pipe> pipes() {
         return Collections.unmodifiableList(pipes);
     }
 
@@ -36,7 +38,15 @@ public final class Pipeline {
     }
 
     public PipelineFuture start() {
-        return start(PipelineContext.shared());
+        return start(false);
+    }
+
+    public PipelineFuture start(boolean shared) {
+        return start(shared ? PipelineContext.shared(this) : PipelineContext.create(this));
+    }
+
+    public PipelineFuture start(String contextName) {
+        return start(PipelineContext.named(this, contextName));
     }
 
     public PipelineFuture start(final PipelineContext pipelineContext) {
@@ -53,12 +63,12 @@ public final class Pipeline {
     }
 
     private Runnable runnable(Pipe pipe, PipelineContext pipelineContext) {
-        final PipeContext context = new PipeContext(pipe, this, pipelineContext);
+        final PipeContext pipeContext = pipelineContext.pipeContext(pipe);
         return () -> {
             try {
-                pipe.process().start(context);
+                pipe.process().start(pipeContext);
             } catch (Throwable cause) {
-                exceptionHandler.handle(new PipeException(cause, context));
+                exceptionHandler.handle(new PipeException(cause, pipeContext));
             }
         };
     }
@@ -91,7 +101,7 @@ public final class Pipeline {
             Pipeline pipeline = new Pipeline(exceptionHandler);
             for (int i = 0, n = processes.size(); i < n; i++) {
                 ProcessInfo info = processes.get(i);
-                pipeline.pipes.add(new Pipe(i, info.process, new ConcurrentChannel(), info.blocking));
+                pipeline.pipes.add(new Pipe(i, info.process, info.blocking));
             }
             return pipeline;
         }

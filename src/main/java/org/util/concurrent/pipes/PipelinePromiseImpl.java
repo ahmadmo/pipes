@@ -3,6 +3,7 @@ package org.util.concurrent.pipes;
 import org.util.concurrent.futures.Do;
 import org.util.concurrent.futures.Promise;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,11 @@ final class PipelinePromiseImpl implements PipelinePromise {
     @Override
     public Void join() {
         return delegate.join();
+    }
+
+    @Override
+    public List<PipePromise> pipes() {
+        return Collections.unmodifiableList(pipePromises);
     }
 
     @Override

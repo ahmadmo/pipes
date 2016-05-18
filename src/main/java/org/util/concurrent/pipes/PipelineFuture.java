@@ -2,6 +2,7 @@ package org.util.concurrent.pipes;
 
 import org.util.concurrent.futures.Future;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
@@ -10,6 +11,8 @@ import java.util.function.BiConsumer;
 public interface PipelineFuture extends Future<Void> {
 
     Pipeline pipeline();
+
+    List<? extends PipeFuture> pipes();
 
     PipeFuture pipeAt(int pipeIndex);
 

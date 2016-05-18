@@ -5,15 +5,15 @@ package org.util.concurrent.pipes;
  */
 public final class Pipe {
 
+    final long id = Seq.next();
+
     private final int index;
     private final Process process;
-    private final Channel channel;
     private final boolean blocking;
 
-    Pipe(int index, Process process, Channel channel, boolean blocking) {
+    Pipe(int index, Process process, boolean blocking) {
         this.index = index;
         this.process = process;
-        this.channel = channel;
         this.blocking = blocking;
     }
 
@@ -23,10 +23,6 @@ public final class Pipe {
 
     public Process process() {
         return process;
-    }
-
-    public Channel channel() {
-        return channel;
     }
 
     public boolean isBlocking() {
