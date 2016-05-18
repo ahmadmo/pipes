@@ -1,6 +1,5 @@
 package org.util.pipes;
 
-import org.util.concurrent.pipes.Channel;
 import org.util.concurrent.pipes.Pipeline;
 import org.util.concurrent.pipes.PipelineContext;
 import org.util.concurrent.pipes.PipelineFuture;
@@ -23,9 +22,8 @@ public class Test {
                     c.eventBus().publish("termination", new Date());
                 })
                 .next(c -> {
-                    Channel channel = c.pipe().channel();
                     for (int i = 0; i < 5; i++) {
-                        System.out.println(channel.readBlocking());
+                        System.out.println(c.channel().readBlocking());
                     }
                     c.dataBus().set("terminate", true);
                 })

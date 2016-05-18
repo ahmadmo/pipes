@@ -19,6 +19,10 @@ public final class PipeContext {
         return pipe;
     }
 
+    public Channel channel() {
+        return pipe.channel();
+    }
+
     public boolean writeToChannel(int pipeIndex, Object message) {
         return pipeline.pipeAt(pipeIndex).channel().write(message);
     }
