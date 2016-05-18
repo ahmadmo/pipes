@@ -1,5 +1,7 @@
 package org.util.concurrent.pipes;
 
+import org.util.concurrent.futures.Do;
+
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
@@ -15,20 +17,40 @@ final class EventBusImpl implements EventBus {
 
     @Override
     public void register(String eventName, Handler<Object> handler) {
-        registries.computeIfAbsent(eventName, s -> new Registry()).addHandler(handler);
+        getOrAddRegistry(eventName).addHandler(handler);
+    }
+
+    @Override
+    public void registerAsync(String eventName, final Handler<Object> handler) {
+        final Registry registry = getOrAddRegistry(eventName);
+        if (registry != null) {
+            Do.executeAsync(() -> registry.addHandler(handler));
+        }
     }
 
     @Override
     public void unregister(String eventName, Handler<Object> handler) {
-        Registry r = registries.get(eventName);
-        if (r != null) {
-            r.removeHandler(handler);
+        Registry registry = registries.get(eventName);
+        if (registry != null) {
+            registry.removeHandler(handler);
         }
     }
 
     @Override
     public void publish(String eventName, Object message) {
-        registries.computeIfAbsent(eventName, s -> new Registry()).publish(message);
+        getOrAddRegistry(eventName).publish(message);
+    }
+
+    @Override
+    public void publishAsync(String eventName, final Object message) {
+        final Registry registry = getOrAddRegistry(eventName);
+        if (registry != null) {
+            Do.executeAsync(() -> registry.publish(message));
+        }
+    }
+
+    private Registry getOrAddRegistry(String eventName) {
+        return registries.computeIfAbsent(eventName, s -> new Registry());
     }
 
     private static final class Registry {

@@ -52,6 +52,14 @@ public final class Do {
 
     }
 
+    public static void execute(Runnable runnable) {
+        SERIAL_EXECUTOR.execute(runnable);
+    }
+
+    public static void executeAsync(Runnable runnable) {
+        THREAD_POOL_EXECUTOR.execute(runnable);
+    }
+
     public static Promise<Void> runSerial(Runnable runnable) {
         return new PromiseImpl<>(CompletableFuture.runAsync(runnable, SERIAL_EXECUTOR));
     }
