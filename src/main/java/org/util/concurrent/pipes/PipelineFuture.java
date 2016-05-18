@@ -16,6 +16,8 @@ public interface PipelineFuture extends Future<Void> {
 
     PipeFuture pipeAt(int pipeIndex);
 
+    PipeFuture findPipe(String pipeName);
+
     @Override
     PipelineFuture whenComplete(BiConsumer<? super Void, ? super Throwable> action);
 

@@ -14,7 +14,7 @@ public class Test {
 
     public static void main(String[] args) {
         Pipeline pipeline = Pipeline.builder()
-                .nextAsync(c -> {
+                .nextAsync("producer", c -> {
                     while (!c.dataBus().contains("terminate")) {
                         c.writeToChannel(2, new Date());
                         sleep(1, TimeUnit.SECONDS);
@@ -22,7 +22,7 @@ public class Test {
                     c.eventBus().publish("termination", new Date());
                 })
                 .next(c -> c.eventBus().register("termination", event -> System.out.println("Termination Date : " + event)))
-                .next(c -> {
+                .next("consumer", c -> {
                     for (int i = 0; i < 5; i++) {
                         System.out.println(c.channel().readBlocking());
                     }
@@ -33,10 +33,10 @@ public class Test {
         PipelineFuture pipelineFuture = pipeline.start("Test Context");
 
         for (final PipeFuture pipeFuture : pipelineFuture.pipes()) {
-            pipeFuture.whenComplete((v, t) -> System.out.println("Process " + pipeFuture.pipe().index() + " completed."));
+            pipeFuture.whenComplete((v, t) -> System.err.println(pipeFuture.pipe().name() + " finished its process."));
         }
 
-        pipelineFuture.whenComplete((v, t) -> System.out.println("Done.")).join();
+        pipelineFuture.whenComplete((v, t) -> System.err.println("Done.")).join();
     }
 
     private static void sleep(long timeout, TimeUnit unit) {

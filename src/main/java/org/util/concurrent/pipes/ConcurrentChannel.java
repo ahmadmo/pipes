@@ -1,5 +1,6 @@
 package org.util.concurrent.pipes;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -56,6 +57,16 @@ final class ConcurrentChannel implements Channel {
         } catch (InterruptedException e) {
             return null;
         }
+    }
+
+    @Override
+    public Object peek() {
+        return messages.peek();
+    }
+
+    @Override
+    public Iterator<Object> iterator() {
+        return messages.iterator();
     }
 
     @Override

@@ -8,6 +8,8 @@ public final class PipeContext {
     private final Pipe pipe;
     private final PipelineContext pipelineContext;
     private final Channel channel = new ConcurrentChannel();
+    private final Channel readOnlyChannel = channel.readOnly();
+    private final Channel writeOnlyChannel = channel.writeOnly();
 
     PipeContext(Pipe pipe, PipelineContext pipelineContext) {
         this.pipe = pipe;
@@ -26,12 +28,24 @@ public final class PipeContext {
         return channel;
     }
 
+    public Channel readOnlyChannel() {
+        return readOnlyChannel;
+    }
+
+    public Channel writeOnlyChannel() {
+        return writeOnlyChannel;
+    }
+
     public Pipeline pipeline() {
         return pipelineContext.pipeline();
     }
 
     public boolean writeToChannel(int pipeIndex, Object message) {
-        return pipelineContext.channel(pipeIndex).write(message);
+        return pipelineContext.writeOnlyChannel(pipeIndex).write(message);
+    }
+
+    public boolean writeToChannel(String pipeName, Object message) {
+        return pipelineContext.writeOnlyChannel(pipeName).write(message);
     }
 
     public DataBus dataBus() {

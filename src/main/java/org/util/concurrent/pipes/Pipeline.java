@@ -18,10 +18,11 @@ public final class Pipeline {
 
     final long id = Seq.next();
 
-    private final List<Pipe> pipes = new ArrayList<>();
+    private final List<Pipe> pipes;
     private final Handler<PipeException> exceptionHandler;
 
-    private Pipeline(Handler<PipeException> exceptionHandler) {
+    private Pipeline(List<Pipe> pipes, Handler<PipeException> exceptionHandler) {
+        this.pipes = pipes;
         this.exceptionHandler = exceptionHandler == null ? DEFAULT_EXCEPTION_HANDLER : exceptionHandler;
     }
 
@@ -31,6 +32,15 @@ public final class Pipeline {
 
     public Pipe pipeAt(int pipeIndex) {
         return pipes.get(pipeIndex);
+    }
+
+    public Pipe findPipe(String name) {
+        for (Pipe pipe : pipes) {
+            if (pipe.name().equals(name)) {
+                return pipe;
+            }
+        }
+        return null;
     }
 
     public int size() {
@@ -73,22 +83,51 @@ public final class Pipeline {
         };
     }
 
+    @Override
+    public int hashCode() {
+        return Long.hashCode(id);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || obj instanceof Pipeline && id == ((Pipeline) obj).id;
+    }
+
+    @Override
+    public String toString() {
+        return "Pipeline{" +
+                "id=" + id +
+                ", pipes=" + pipes +
+                '}';
+    }
+
     public static Builder builder() {
         return new Builder();
     }
 
     public static final class Builder {
 
-        private final List<ProcessInfo> processes = new ArrayList<>();
+        private final List<Pipe> pipes = new ArrayList<>();
         private Handler<PipeException> exceptionHandler;
 
         public Builder next(Process process) {
-            processes.add(new ProcessInfo(process, true));
-            return this;
+            return next("pipe-" + pipes.size(), process);
+        }
+
+        public Builder next(String name, Process process) {
+            return next(name, process, true);
         }
 
         public Builder nextAsync(Process process) {
-            processes.add(new ProcessInfo(process, false));
+            return nextAsync("pipe-" + pipes.size(), process);
+        }
+
+        public Builder nextAsync(String name, Process process) {
+            return next(name, process, false);
+        }
+
+        private Builder next(String name, Process process, boolean blocking) {
+            pipes.add(new Pipe(pipes.size(), name, process, blocking));
             return this;
         }
 
@@ -98,24 +137,7 @@ public final class Pipeline {
         }
 
         public Pipeline build() {
-            Pipeline pipeline = new Pipeline(exceptionHandler);
-            for (int i = 0, n = processes.size(); i < n; i++) {
-                ProcessInfo info = processes.get(i);
-                pipeline.pipes.add(new Pipe(i, info.process, info.blocking));
-            }
-            return pipeline;
-        }
-
-        private static final class ProcessInfo {
-
-            private final Process process;
-            private final boolean blocking;
-
-            private ProcessInfo(Process process, boolean blocking) {
-                this.process = process;
-                this.blocking = blocking;
-            }
-
+            return new Pipeline(pipes, exceptionHandler);
         }
 
     }

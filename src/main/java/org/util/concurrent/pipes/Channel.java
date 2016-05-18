@@ -1,5 +1,6 @@
 package org.util.concurrent.pipes;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +20,10 @@ public interface Channel {
     Object readBlocking(long timeout, TimeUnit unit);
 
     Object readBlocking();
+
+    Object peek();
+
+    Iterator<Object> iterator();
 
     int size();
 

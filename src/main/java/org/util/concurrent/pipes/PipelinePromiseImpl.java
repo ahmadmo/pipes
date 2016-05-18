@@ -62,6 +62,16 @@ final class PipelinePromiseImpl implements PipelinePromise {
     }
 
     @Override
+    public PipePromise findPipe(String pipeName) {
+        for (PipePromise promise : pipePromises) {
+            if (promise.pipe().name().equals(pipeName)) {
+                return promise;
+            }
+        }
+        return null;
+    }
+
+    @Override
     public PipelinePromise whenComplete(BiConsumer<? super Void, ? super Throwable> action) {
         delegate.whenComplete(action);
         return this;

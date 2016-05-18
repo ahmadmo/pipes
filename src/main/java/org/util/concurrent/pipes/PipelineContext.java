@@ -36,8 +36,12 @@ public final class PipelineContext {
         return pipeContexts.computeIfAbsent(pipe.id, l -> new PipeContext(pipe, this));
     }
 
-    Channel channel(int pipeIndex) {
-        return pipeContext(pipeline.pipeAt(pipeIndex)).channel();
+    public Channel writeOnlyChannel(int pipeIndex) {
+        return pipeContext(pipeline.pipeAt(pipeIndex)).writeOnlyChannel();
+    }
+
+    public Channel writeOnlyChannel(String pipeName) {
+        return pipeContext(pipeline.findPipe(pipeName)).writeOnlyChannel();
     }
 
     public static PipelineContext create(Pipeline pipeline) {

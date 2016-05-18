@@ -18,6 +18,9 @@ public interface PipelinePromise extends PipelineFuture, Promise<Void> {
     PipePromise pipeAt(int pipeIndex);
 
     @Override
+    PipePromise findPipe(String pipeName);
+
+    @Override
     PipelinePromise whenComplete(BiConsumer<? super Void, ? super Throwable> action);
 
     @Override

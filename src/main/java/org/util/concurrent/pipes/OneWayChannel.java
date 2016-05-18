@@ -1,12 +1,13 @@
 package org.util.concurrent.pipes;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author ahmad
  */
-public final class OneWayChannel implements Channel {
+final class OneWayChannel implements Channel {
 
     private final Channel delegate;
     private final AccessMode mode;
@@ -53,6 +54,18 @@ public final class OneWayChannel implements Channel {
     }
 
     @Override
+    public Object peek() {
+        checkAccess(AccessMode.READ_ONLY);
+        return delegate.peek();
+    }
+
+    @Override
+    public Iterator<Object> iterator() {
+        checkAccess(AccessMode.READ_ONLY);
+        return delegate.iterator();
+    }
+
+    @Override
     public int size() {
         return delegate.size();
     }
@@ -64,8 +77,7 @@ public final class OneWayChannel implements Channel {
 
     @Override
     public void clear() {
-        checkAccess(AccessMode.WRITE_ONLY);
-        delegate.clear();
+        throw new UnsupportedOperationException("OneWay Channel");
     }
 
     @Override
