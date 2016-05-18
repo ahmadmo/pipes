@@ -28,7 +28,7 @@ public final class Pipeline {
         return pipes;
     }
 
-    Pipe pipeAt(int pipeIndex) {
+    public Pipe pipeAt(int pipeIndex) {
         return pipes.get(pipeIndex);
     }
 

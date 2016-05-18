@@ -73,7 +73,7 @@ public final class Do {
         CompletableFuture<V> future = null;
         for (Promise<? extends V> promise : promises) {
             @SuppressWarnings("unchecked")
-            CompletableFuture<V> d = ((PromiseImpl) promise).getDelegate();
+            CompletableFuture<V> d = ((PromiseImpl) promise).delegate;
             future = future == null ? d : future.thenCombine(d, combiner);
         }
         return new PromiseImpl<>(future);
@@ -84,7 +84,7 @@ public final class Do {
         BiFunction<Void, Void, Void> combiner = (a, b) -> null;
         for (Promise<? extends Void> promise : promises) {
             @SuppressWarnings("unchecked")
-            CompletableFuture<Void> d = ((PromiseImpl) promise).getDelegate();
+            CompletableFuture<Void> d = ((PromiseImpl) promise).delegate;
             future = future == null ? d : future.thenCombine(d, combiner);
         }
         return new PromiseImpl<>(future);

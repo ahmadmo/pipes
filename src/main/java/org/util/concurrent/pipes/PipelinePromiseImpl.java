@@ -4,7 +4,6 @@ import org.util.concurrent.futures.Do;
 import org.util.concurrent.futures.Promise;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -18,13 +17,15 @@ import java.util.stream.Collectors;
 final class PipelinePromiseImpl implements PipelinePromise {
 
     private final Pipeline pipeline;
+    private final List<PipePromise> pipePromises;
     private final Promise<Void> delegate;
 
     PipelinePromiseImpl(Pipeline pipeline, List<PipePromise> pipePromises) {
-        this.pipeline = Objects.requireNonNull(pipeline);
+        this.pipeline = pipeline;
+        this.pipePromises = pipePromises;
         this.delegate = Do.combine(
                 pipePromises.stream()
-                        .map(promise -> ((PipePromiseImpl) promise).getDelegate())
+                        .map(promise -> ((PipePromiseImpl) promise).delegate)
                         .collect(Collectors.toList())
         );
     }
@@ -47,6 +48,11 @@ final class PipelinePromiseImpl implements PipelinePromise {
     @Override
     public Void join() {
         return delegate.join();
+    }
+
+    @Override
+    public PipePromise pipeAt(int pipeIndex) {
+        return pipePromises.get(pipeIndex);
     }
 
     @Override

@@ -2,7 +2,6 @@ package org.util.concurrent.pipes;
 
 import org.util.concurrent.futures.Promise;
 
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -15,15 +14,12 @@ import java.util.function.Function;
 final class PipePromiseImpl implements PipePromise {
 
     private final Pipe pipe;
-    private final Promise<Void> delegate;
+
+    final Promise<Void> delegate;
 
     PipePromiseImpl(Pipe pipe, Promise<Void> promise) {
-        this.pipe = Objects.requireNonNull(pipe);
-        this.delegate = Objects.requireNonNull(promise);
-    }
-
-    Promise<Void> getDelegate() {
-        return delegate;
+        this.pipe = pipe;
+        this.delegate = promise;
     }
 
     @Override

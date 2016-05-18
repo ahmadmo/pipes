@@ -11,6 +11,9 @@ import java.util.function.Function;
 public interface PipelinePromise extends PipelineFuture, Promise<Void> {
 
     @Override
+    PipePromise pipeAt(int pipeIndex);
+
+    @Override
     PipelinePromise whenComplete(BiConsumer<? super Void, ? super Throwable> action);
 
     @Override

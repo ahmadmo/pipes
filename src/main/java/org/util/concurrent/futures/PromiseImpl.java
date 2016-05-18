@@ -1,6 +1,5 @@
 package org.util.concurrent.futures;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -13,14 +12,10 @@ import java.util.function.Function;
  */
 final class PromiseImpl<V> implements Promise<V> {
 
-    private final CompletableFuture<V> delegate;
+    final CompletableFuture<V> delegate;
 
     PromiseImpl(CompletableFuture<V> future) {
-        this.delegate = Objects.requireNonNull(future);
-    }
-
-    CompletableFuture<V> getDelegate() {
-        return delegate;
+        this.delegate = future;
     }
 
     @Override
