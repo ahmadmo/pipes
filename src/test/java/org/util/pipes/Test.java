@@ -2,6 +2,7 @@ package org.util.pipes;
 
 import org.util.concurrent.pipes.Channel;
 import org.util.concurrent.pipes.Pipeline;
+import org.util.concurrent.pipes.PipelineContext;
 import org.util.concurrent.pipes.PipelineFuture;
 
 import java.util.Date;
@@ -26,7 +27,7 @@ public class Test {
             context.dataBus().set("terminate", true);
         }).build();
 
-        PipelineFuture pipelineFuture = pipeline.start();
+        PipelineFuture pipelineFuture = pipeline.start(PipelineContext.named("Test Context"));
 
         pipelineFuture.pipeAt(0).whenComplete((v, t) -> System.out.println("Process 0 completed."));
         pipelineFuture.pipeAt(1).whenComplete((v, t) -> System.out.println("Process 1 completed."));

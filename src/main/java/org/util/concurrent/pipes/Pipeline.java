@@ -16,8 +16,6 @@ public final class Pipeline {
     };
 
     private final List<Pipe> pipes = new ArrayList<>();
-    private final DataBus dataBus = new DataBusImpl();
-    private final EventBus eventBus = new EventBusImpl();
     private final Handler<PipeException> exceptionHandler;
 
     private Pipeline(Handler<PipeException> exceptionHandler) {
@@ -36,28 +34,25 @@ public final class Pipeline {
         return pipes.size();
     }
 
-    public DataBus getDataBus() {
-        return dataBus;
-    }
-
-    public EventBus getEventBus() {
-        return eventBus;
-    }
-
     public PipelineFuture start() {
+        return start(PipelineContext.shared());
+    }
+
+    public PipelineFuture start(final PipelineContext pipelineContext) {
         return new PipelinePromiseImpl(
                 this,
                 pipes.stream()
                         .map(pipe -> new PipePromiseImpl(
-                                pipe,
-                                pipe.isBlocking() ? Do.runSerial(runnable(pipe)) : Do.runAsync(runnable(pipe))
+                                pipe, pipe.isBlocking()
+                                ? Do.runSerial(runnable(pipe, pipelineContext))
+                                : Do.runAsync(runnable(pipe, pipelineContext))
                         ))
                         .collect(Collectors.toList())
         );
     }
 
-    private Runnable runnable(Pipe pipe) {
-        final PipeContext context = new PipeContext(pipe, this);
+    private Runnable runnable(Pipe pipe, PipelineContext pipelineContext) {
+        final PipeContext context = new PipeContext(pipe, this, pipelineContext);
         return () -> {
             try {
                 pipe.getProcess().start(context);
