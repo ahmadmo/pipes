@@ -3,6 +3,7 @@ package org.util.concurrent.pipes;
 import org.util.concurrent.futures.Do;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,8 +23,8 @@ public final class Pipeline {
         this.exceptionHandler = exceptionHandler == null ? DEFAULT_EXCEPTION_HANDLER : exceptionHandler;
     }
 
-    List<Pipe> getPipes() {
-        return pipes;
+    public List<Pipe> getPipes() {
+        return Collections.unmodifiableList(pipes);
     }
 
     public Pipe pipeAt(int pipeIndex) {
