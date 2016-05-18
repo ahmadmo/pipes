@@ -17,15 +17,15 @@ public final class Pipe {
         this.blocking = blocking;
     }
 
-    public int getIndex() {
+    public int index() {
         return index;
     }
 
-    public Process getProcess() {
+    public Process process() {
         return process;
     }
 
-    public Channel getChannel() {
+    public Channel channel() {
         return channel;
     }
 

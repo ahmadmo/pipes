@@ -23,7 +23,7 @@ public class Test {
                     c.eventBus().publish("termination", new Date());
                 })
                 .next(c -> {
-                    Channel channel = c.pipe().getChannel();
+                    Channel channel = c.pipe().channel();
                     for (int i = 0; i < 5; i++) {
                         System.out.println(channel.readBlocking());
                     }

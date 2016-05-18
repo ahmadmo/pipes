@@ -56,7 +56,7 @@ public final class Pipeline {
         final PipeContext context = new PipeContext(pipe, this, pipelineContext);
         return () -> {
             try {
-                pipe.getProcess().start(context);
+                pipe.process().start(context);
             } catch (Throwable cause) {
                 exceptionHandler.handle(new PipeException(cause, context));
             }

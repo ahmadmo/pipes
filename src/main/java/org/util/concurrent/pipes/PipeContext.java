@@ -20,7 +20,7 @@ public final class PipeContext {
     }
 
     public boolean writeToChannel(int pipeIndex, Object message) {
-        return pipeline.pipeAt(pipeIndex).getChannel().write(message);
+        return pipeline.pipeAt(pipeIndex).channel().write(message);
     }
 
     public DataBus dataBus() {
