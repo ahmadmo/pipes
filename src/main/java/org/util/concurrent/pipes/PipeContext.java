@@ -24,11 +24,11 @@ public final class PipeContext {
     }
 
     public DataBus dataBus() {
-        return pipelineContext.getDataBus();
+        return pipelineContext.dataBus();
     }
 
     public EventBus eventBus() {
-        return pipelineContext.getEventBus();
+        return pipelineContext.eventBus();
     }
 
 }

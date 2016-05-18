@@ -17,11 +17,11 @@ public final class PipelineContext {
     private final DataBus dataBus = new DataBusImpl();
     private final EventBus eventBus = new EventBusImpl();
 
-    public DataBus getDataBus() {
+    public DataBus dataBus() {
         return dataBus;
     }
 
-    public EventBus getEventBus() {
+    public EventBus eventBus() {
         return eventBus;
     }
 

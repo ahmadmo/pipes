@@ -14,18 +14,23 @@ import java.util.concurrent.TimeUnit;
 public class Test {
 
     public static void main(String[] args) {
-        Pipeline pipeline = Pipeline.builder().nextAsync(context -> {
-            while (!context.dataBus().contains("terminate")) {
-                context.writeToChannel(1, new Date());
-                sleep(1, TimeUnit.SECONDS);
-            }
-        }).next(context -> {
-            Channel channel = context.pipe().getChannel();
-            for (int i = 0; i < 5; i++) {
-                System.out.println(channel.readBlocking());
-            }
-            context.dataBus().set("terminate", true);
-        }).build();
+        Pipeline pipeline = Pipeline.builder()
+                .nextAsync(c -> {
+                    while (!c.dataBus().contains("terminate")) {
+                        c.writeToChannel(1, new Date());
+                        sleep(1, TimeUnit.SECONDS);
+                    }
+                    c.eventBus().publish("termination", new Date());
+                })
+                .next(c -> {
+                    Channel channel = c.pipe().getChannel();
+                    for (int i = 0; i < 5; i++) {
+                        System.out.println(channel.readBlocking());
+                    }
+                    c.dataBus().set("terminate", true);
+                })
+                .nextAsync(c -> c.eventBus().register("termination", event -> System.out.println("Termination Date : " + event)))
+                .build();
 
         PipelineFuture pipelineFuture = pipeline.start(PipelineContext.named("Test Context"));
 
