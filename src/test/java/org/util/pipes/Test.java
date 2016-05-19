@@ -16,7 +16,7 @@ public class Test {
         Pipeline pipeline = Pipeline.builder()
                 .nextAsync("producer", c -> {
                     while (!c.dataBus().contains("terminate")) {
-                        c.writeToChannel(2, new Date());
+                        c.writeToChannel("consumer", new Date());
                         sleep(1, TimeUnit.SECONDS);
                     }
                     c.eventBus().publish("termination", new Date());
