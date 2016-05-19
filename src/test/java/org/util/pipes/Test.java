@@ -16,8 +16,8 @@ public class Test {
         Pipeline pipeline = Pipeline.builder()
                 .nextAsync("producer", c -> {
                     while (!c.dataBus().contains("terminate")) {
-                        c.writeToChannel("consumer", new Date());
                         sleep(1, TimeUnit.SECONDS);
+                        c.writeToChannel("consumer", new Date());
                     }
                     c.eventBus().publish("termination", new Date());
                 })
@@ -33,10 +33,10 @@ public class Test {
         PipelineFuture pipelineFuture = pipeline.start("Test Context");
 
         for (final PipeFuture pipeFuture : pipelineFuture.pipeFutures()) {
-            pipeFuture.whenComplete((v, t) -> System.err.println(pipeFuture.pipe().name() + " finished its process."));
+            pipeFuture.whenComplete((v, t) -> System.out.println(pipeFuture.pipe().name() + " finished its process."));
         }
 
-        pipelineFuture.whenComplete((v, t) -> System.err.println("Done.")).join();
+        pipelineFuture.whenComplete((v, t) -> System.out.println("Done.")).join();
     }
 
     private static void sleep(long timeout, TimeUnit unit) {
