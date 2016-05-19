@@ -94,14 +94,11 @@ public final class Do {
         if (promises.isEmpty()) {
             return new PromiseImpl<>(new CompletableFuture<>());
         }
-        CompletableFuture<Void> future = null;
-        BiFunction<Void, Void, Void> combiner = (a, b) -> null;
-        for (Promise<? extends Void> promise : promises) {
-            @SuppressWarnings("unchecked")
-            CompletableFuture<Void> d = ((PromiseImpl) promise).delegate;
-            future = future == null ? d : future.thenCombine(d, combiner);
+        CompletableFuture[] futures = new CompletableFuture[promises.size()];
+        for (int i = 0, n = promises.size(); i < n; i++) {
+            futures[i] = ((PromiseImpl) promises.get(i)).delegate;
         }
-        return new PromiseImpl<>(future);
+        return new PromiseImpl<>(CompletableFuture.allOf(futures));
     }
 
 }
