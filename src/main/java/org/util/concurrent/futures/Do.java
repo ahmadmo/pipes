@@ -52,7 +52,7 @@ public final class Do {
 
     }
 
-    public static void execute(Runnable runnable) {
+    public static void executeSerial(Runnable runnable) {
         SERIAL_EXECUTOR.execute(runnable);
     }
 
@@ -78,6 +78,9 @@ public final class Do {
 
     public static <V> Promise<V> combine(List<? extends Promise<? extends V>> promises,
                                          BiFunction<? super V, ? super V, ? extends V> combiner) {
+        if (promises.isEmpty()) {
+            return new PromiseImpl<>(new CompletableFuture<>());
+        }
         CompletableFuture<V> future = null;
         for (Promise<? extends V> promise : promises) {
             @SuppressWarnings("unchecked")
@@ -88,6 +91,9 @@ public final class Do {
     }
 
     public static Promise<Void> combine(List<? extends Promise<? extends Void>> promises) {
+        if (promises.isEmpty()) {
+            return new PromiseImpl<>(new CompletableFuture<>());
+        }
         CompletableFuture<Void> future = null;
         BiFunction<Void, Void, Void> combiner = (a, b) -> null;
         for (Promise<? extends Void> promise : promises) {
