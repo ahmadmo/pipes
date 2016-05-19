@@ -5,6 +5,7 @@ import org.util.concurrent.futures.Promise;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -19,11 +20,13 @@ final class PipelinePromiseImpl implements PipelinePromise {
 
     private final Pipeline pipeline;
     private final List<PipePromise> pipePromises;
+    private final Map<String, PipePromise> pipePromiseNames;
     private final Promise<Void> delegate;
 
-    PipelinePromiseImpl(Pipeline pipeline, List<PipePromise> pipePromises) {
+    PipelinePromiseImpl(Pipeline pipeline, List<PipePromise> pipePromises, Map<String, PipePromise> pipePromiseNames) {
         this.pipeline = pipeline;
         this.pipePromises = pipePromises;
+        this.pipePromiseNames = pipePromiseNames;
         this.delegate = Do.combine(
                 pipePromises.stream()
                         .map(promise -> ((PipePromiseImpl) promise).delegate)
@@ -52,23 +55,18 @@ final class PipelinePromiseImpl implements PipelinePromise {
     }
 
     @Override
-    public List<PipePromise> pipes() {
+    public List<PipePromise> pipeFutures() {
         return Collections.unmodifiableList(pipePromises);
     }
 
     @Override
-    public PipePromise pipeAt(int pipeIndex) {
+    public PipePromise pipeFutureAt(int pipeIndex) {
         return pipePromises.get(pipeIndex);
     }
 
     @Override
-    public PipePromise findPipe(String pipeName) {
-        for (PipePromise promise : pipePromises) {
-            if (promise.pipe().name().equals(pipeName)) {
-                return promise;
-            }
-        }
-        return null;
+    public PipePromise findPipeFuture(String pipeName) {
+        return pipePromiseNames.get(pipeName);
     }
 
     @Override

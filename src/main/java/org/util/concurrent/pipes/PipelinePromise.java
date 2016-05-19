@@ -12,13 +12,13 @@ import java.util.function.Function;
 public interface PipelinePromise extends PipelineFuture, Promise<Void> {
 
     @Override
-    List<PipePromise> pipes();
+    List<PipePromise> pipeFutures();
 
     @Override
-    PipePromise pipeAt(int pipeIndex);
+    PipePromise pipeFutureAt(int pipeIndex);
 
     @Override
-    PipePromise findPipe(String pipeName);
+    PipePromise findPipeFuture(String pipeName);
 
     @Override
     PipelinePromise whenComplete(BiConsumer<? super Void, ? super Throwable> action);

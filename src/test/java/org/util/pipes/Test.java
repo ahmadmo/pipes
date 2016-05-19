@@ -32,7 +32,7 @@ public class Test {
 
         PipelineFuture pipelineFuture = pipeline.start("Test Context");
 
-        for (final PipeFuture pipeFuture : pipelineFuture.pipes()) {
+        for (final PipeFuture pipeFuture : pipelineFuture.pipeFutures()) {
             pipeFuture.whenComplete((v, t) -> System.err.println(pipeFuture.pipe().name() + " finished its process."));
         }
 

@@ -2,10 +2,7 @@ package org.util.concurrent.pipes;
 
 import org.util.concurrent.futures.Do;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * @author ahmad
@@ -19,10 +16,12 @@ public final class Pipeline {
     final long id = Seq.next();
 
     private final List<Pipe> pipes;
+    private final Map<String, Pipe> pipeNames;
     private final Handler<PipeException> exceptionHandler;
 
-    private Pipeline(List<Pipe> pipes, Handler<PipeException> exceptionHandler) {
+    private Pipeline(List<Pipe> pipes, Map<String, Pipe> pipeNames, Handler<PipeException> exceptionHandler) {
         this.pipes = pipes;
+        this.pipeNames = pipeNames;
         this.exceptionHandler = exceptionHandler == null ? DEFAULT_EXCEPTION_HANDLER : exceptionHandler;
     }
 
@@ -35,12 +34,7 @@ public final class Pipeline {
     }
 
     public Pipe findPipe(String name) {
-        for (Pipe pipe : pipes) {
-            if (pipe.name().equals(name)) {
-                return pipe;
-            }
-        }
-        return null;
+        return pipeNames.get(name);
     }
 
     public int size() {
@@ -60,16 +54,15 @@ public final class Pipeline {
     }
 
     public PipelineFuture start(final PipelineContext pipelineContext) {
-        return new PipelinePromiseImpl(
-                this,
-                pipes.stream()
-                        .map(pipe -> new PipePromiseImpl(
-                                pipe, pipe.isBlocking()
-                                ? Do.runSerial(runnable(pipe, pipelineContext))
-                                : Do.runAsync(runnable(pipe, pipelineContext))
-                        ))
-                        .collect(Collectors.toList())
-        );
+        List<PipePromise> pipePromises = new ArrayList<>();
+        Map<String, PipePromise> pipePromiseNames = new HashMap<>();
+        for (Pipe pipe : pipes) {
+            Runnable runnable = runnable(pipe, pipelineContext);
+            PipePromise pipePromise = new PipePromiseImpl(pipe, pipe.isBlocking() ? Do.runSerial(runnable) : Do.runAsync(runnable));
+            pipePromises.add(pipePromise);
+            pipePromiseNames.put(pipe.name(), pipePromise);
+        }
+        return new PipelinePromiseImpl(this, pipePromises, pipePromiseNames);
     }
 
     private Runnable runnable(Pipe pipe, PipelineContext pipelineContext) {
@@ -108,6 +101,7 @@ public final class Pipeline {
     public static final class Builder {
 
         private final List<Pipe> pipes = new ArrayList<>();
+        private final Map<String, Pipe> pipeNames = new HashMap<>();
         private Handler<PipeException> exceptionHandler;
 
         public Builder next(Process process) {
@@ -127,7 +121,11 @@ public final class Pipeline {
         }
 
         private Builder next(String name, Process process, boolean blocking) {
-            pipes.add(new Pipe(pipes.size(), name, process, blocking));
+            Pipe pipe = new Pipe(pipes.size(), name, process, blocking);
+            if (pipeNames.put(name, pipe) != null) {
+                throw new IllegalStateException("Duplicate pipe name : " + name);
+            }
+            pipes.add(pipe);
             return this;
         }
 
@@ -137,7 +135,7 @@ public final class Pipeline {
         }
 
         public Pipeline build() {
-            return new Pipeline(pipes, exceptionHandler);
+            return new Pipeline(pipes, pipeNames, exceptionHandler);
         }
 
     }

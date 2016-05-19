@@ -12,11 +12,11 @@ public interface PipelineFuture extends Future<Void> {
 
     Pipeline pipeline();
 
-    List<? extends PipeFuture> pipes();
+    List<? extends PipeFuture> pipeFutures();
 
-    PipeFuture pipeAt(int pipeIndex);
+    PipeFuture pipeFutureAt(int pipeIndex);
 
-    PipeFuture findPipe(String pipeName);
+    PipeFuture findPipeFuture(String pipeName);
 
     @Override
     PipelineFuture whenComplete(BiConsumer<? super Void, ? super Throwable> action);
