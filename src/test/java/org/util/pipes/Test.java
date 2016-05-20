@@ -23,7 +23,6 @@ public class Test {
                     c.eventBus().publish("termination", new Date());
                 })
                 .next(c -> c.eventBus().register("termination", event -> System.out.println("Termination Date : " + event)))
-                .next(c -> sleep(1, TimeUnit.SECONDS))
                 .next("consumer", c -> {
                     for (int i = 0; i < 5; i++) {
                         System.out.println(c.channel().readBlocking());
