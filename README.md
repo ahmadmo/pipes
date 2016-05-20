@@ -1,2 +1,2 @@
 # pipes
-A simple Pipeline-based Architecture.
+Lightweight Pipeline-based library written in Java.
