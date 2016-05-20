@@ -16,17 +16,28 @@
 
 package org.util.concurrent.pipes;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * @author ahmad
  */
-final class Seq {
+final class RunnablePipe implements Runnable {
 
-    private static final AtomicLong C = new AtomicLong();
+    private final PipeContext pipeContext;
+    private final PipelineEngine pipelineEngine;
 
-    static long next() {
-        return C.incrementAndGet();
+    RunnablePipe(PipeContext pipeContext, PipelineEngine pipelineEngine) {
+        this.pipeContext = pipeContext;
+        this.pipelineEngine = pipelineEngine;
+    }
+
+    @Override
+    public void run() {
+        try {
+            if (pipelineEngine.awaitAndContinue()) {
+                pipeContext.startProcess();
+            }
+        } catch (Throwable cause) {
+            throw new PipeException(cause, pipeContext);
+        }
     }
 
 }

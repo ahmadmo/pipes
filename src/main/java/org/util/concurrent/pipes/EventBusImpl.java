@@ -24,93 +24,150 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
  * @author ahmad
  */
-final class EventBusImpl implements EventBus {
+final class EventBusImpl extends AbstractControllable implements EventBus {
 
-    private final ConcurrentMap<String, Registry> registries = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Topic> topics = new ConcurrentHashMap<>();
+    private final ThreadPool pool = new ThreadPool();
 
-    @Override
-    public void register(String eventName, Handler<Object> handler) {
-        register(eventName, handler, PublishMode.SERIAL);
+    EventBusImpl() {
+        super("EventBus");
     }
 
     @Override
-    public void registerAsync(String eventName, Handler<Object> handler) {
-        registerAsync(eventName, handler, PublishMode.SERIAL);
+    public void register(String topic, Handler<Object> handler) {
+        register(topic, handler, PublishMode.SERIAL);
     }
 
     @Override
-    public void register(String eventName, Handler<Object> handler, PublishMode mode) {
-        getOrAddRegistry(eventName).addHandler(handler, mode, false);
+    public void registerAsync(String topic, Handler<Object> handler) {
+        registerAsync(topic, handler, PublishMode.SERIAL);
     }
 
     @Override
-    public void registerAsync(String eventName, Handler<Object> handler, PublishMode mode) {
-        getOrAddRegistry(eventName).addHandler(handler, mode, true);
+    public void register(String topic, Handler<Object> handler, PublishMode mode) {
+        checkShutdown();
+        getOrAddRegistry(topic).addHandler(handler, mode, false);
     }
 
     @Override
-    public void unregister(String eventName, Handler<Object> handler) {
-        Registry registry = registries.get(eventName);
-        if (registry != null) {
-            registry.removeHandler(handler);
+    public void registerAsync(String topic, Handler<Object> handler, PublishMode mode) {
+        checkShutdown();
+        getOrAddRegistry(topic).addHandler(handler, mode, true);
+    }
+
+    @Override
+    public void unregister(String topic, Handler<Object> handler) {
+        Topic t = topics.get(topic);
+        if (t != null) {
+            t.removeHandler(handler);
         }
     }
 
     @Override
-    public void publish(String eventName, Object message) {
-        publish(eventName, message, PublishMode.ASYNC);
+    public void unregisterHandlers(String topic) {
+        Topic t = topics.get(topic);
+        if (t != null) {
+            t.removeHandlers();
+        }
     }
 
     @Override
-    public void publishAsync(String eventName, Object message) {
-        publishAsync(eventName, message, PublishMode.ASYNC);
+    public void unregisterAllHandlers() {
+        topics.forEach((s, topic) -> topic.removeHandlers());
     }
 
     @Override
-    public void publish(String eventName, Object message, PublishMode mode) {
-        getOrAddRegistry(eventName).publish(message, mode, false);
+    public void publish(String topic, Object message) {
+        publish(topic, message, PublishMode.ASYNC);
     }
 
     @Override
-    public void publishAsync(String eventName, Object message, PublishMode mode) {
-        getOrAddRegistry(eventName).publish(message, mode, true);
+    public void publishAsync(String topic, Object message) {
+        publishAsync(topic, message, PublishMode.ASYNC);
     }
 
-    private Registry getOrAddRegistry(String eventName) {
-        return registries.computeIfAbsent(eventName, s -> new Registry());
+    @Override
+    public void publish(String topic, Object message, PublishMode mode) {
+        checkShutdown();
+        checkStopped();
+        getOrAddRegistry(topic).publish(message, mode, false);
     }
 
-    private static final class Registry {
+    @Override
+    public void publishAsync(String topic, Object message, PublishMode mode) {
+        checkShutdown();
+        checkStopped();
+        getOrAddRegistry(topic).publish(message, mode, true);
+    }
 
-        private final Queue<Object> topic = new ArrayDeque<>();
+    @Override
+    public void clearMessages(String topic) {
+        Topic t = topics.get(topic);
+        if (t != null) {
+            t.clear();
+        }
+    }
+
+    @Override
+    public void clearAllMessages() {
+        topics.forEach((s, topic) -> topic.clear());
+    }
+
+    @Override
+    public void reset(String topic) {
+        unregisterHandlers(topic);
+        clearMessages(topic);
+    }
+
+    @Override
+    public void resetAll() {
+        unregisterAllHandlers();
+        clearAllMessages();
+    }
+
+    @Override
+    public void start() {
+        start(1);
+    }
+
+    @Override
+    Object doStart(Object... args) {
+        return null;
+    }
+
+    @Override
+    void doShutdown() {
+        pool.shutdownGracefully();
+    }
+
+    private Topic getOrAddRegistry(String topic) {
+        return topics.computeIfAbsent(topic, s -> new Topic());
+    }
+
+    private final class Topic extends ReadWriteLockContainer {
+
+        private final Queue<Object> messages = new ArrayDeque<>();
         private final List<Handler<Object>> handlers = new CopyOnWriteArrayList<>();
-        private final ReadWriteLock lock = new ReentrantReadWriteLock();
-        private final Lock r = lock.readLock();
-        private final Lock w = lock.writeLock();
 
         private void addHandler(final Handler<Object> handler, final PublishMode mode, boolean async) {
             List<CompletableFuture<Void>> futures = async ? null : new ArrayList<>();
-            r.lock();
-            try {
-                if (async) for (Object message : topic) send(handler, message, mode);
-                else futures.addAll(topic.stream()
-                        .map(message -> sendWithPromise(handler, message, mode))
-                        .collect(Collectors.toList())
-                );
+            acquireReadLock(() -> {
+                if (!isPaused()) {
+                    if (async) for (Object message : messages) send(handler, message, mode);
+                    else futures.addAll(messages.stream()
+                            .map(message -> sendWithPromise(handler, message, mode))
+                            .collect(Collectors.toList())
+                    );
+                }
                 handlers.add(handler);
-            } finally {
-                r.unlock();
-            }
+            });
             if (!async && !futures.isEmpty()) {
-                Do.combine(futures).join();
+                Futures.combine(futures).join();
             }
         }
 
@@ -118,31 +175,34 @@ final class EventBusImpl implements EventBus {
             handlers.remove(handler);
         }
 
+        private void removeHandlers() {
+            handlers.clear();
+        }
+
         private void publish(final Object message, final PublishMode mode, boolean async) {
             List<CompletableFuture<Void>> futures = async ? null : new ArrayList<>();
-            w.lock();
-            try {
-                if (async) for (Handler<Object> handler : handlers) send(handler, message, mode);
-                else futures.addAll(handlers.stream()
-                        .map(handler -> sendWithPromise(handler, message, mode))
-                        .collect(Collectors.toList())
-                );
-                topic.offer(message);
-            } finally {
-                w.unlock();
-            }
+            acquireWriteLock(() -> {
+                if (!isPaused()) {
+                    if (async) for (Handler<Object> handler : handlers) send(handler, message, mode);
+                    else futures.addAll(handlers.stream()
+                            .map(handler -> sendWithPromise(handler, message, mode))
+                            .collect(Collectors.toList())
+                    );
+                }
+                messages.offer(message);
+            });
             if (!async && !futures.isEmpty()) {
-                Do.combine(futures).join();
+                Futures.combine(futures).join();
             }
         }
 
         private void send(final Handler<Object> handler, final Object message, PublishMode mode) {
             switch (mode) {
                 case ASYNC:
-                    Do.executeAsync(() -> handler.handle(message));
+                    pool.executeAsync(() -> handler.handle(message));
                     break;
                 case SERIAL:
-                    Do.executeSerial(() -> handler.handle(message));
+                    pool.executeSerial(() -> handler.handle(message));
                     break;
             }
         }
@@ -150,11 +210,15 @@ final class EventBusImpl implements EventBus {
         private CompletableFuture<Void> sendWithPromise(final Handler<Object> handler, final Object message, PublishMode mode) {
             switch (mode) {
                 case ASYNC:
-                    return Do.runAsync(() -> handler.handle(message));
+                    return pool.runAsync(() -> handler.handle(message));
                 case SERIAL:
                 default:
-                    return Do.runSerial(() -> handler.handle(message));
+                    return pool.runSerial(() -> handler.handle(message));
             }
+        }
+
+        private void clear() {
+            acquireWriteLock(messages::clear);
         }
 
     }

@@ -27,15 +27,17 @@ import java.util.concurrent.CompletableFuture;
 public final class CompletablePipeline extends Completable<CompletablePipeline> {
 
     private final Pipeline pipeline;
+    private final PipelineEngine pipelineEngine;
     private final List<CompletablePipe> completablePipes;
     private final Map<String, CompletablePipe> completablePipeNames;
 
     CompletablePipeline(Pipeline pipeline,
                         List<CompletablePipe> completablePipes,
                         Map<String, CompletablePipe> completablePipeNames,
-                        CompletableFuture<Void> future) {
+                        CompletableFuture<Void> future, PipelineEngine pipelineEngine) {
         super(future);
         this.pipeline = pipeline;
+        this.pipelineEngine = pipelineEngine;
         this.completablePipes = completablePipes;
         this.completablePipeNames = completablePipeNames;
     }
@@ -44,15 +46,19 @@ public final class CompletablePipeline extends Completable<CompletablePipeline> 
         return pipeline;
     }
 
+    public PipelineEngine engine() {
+        return pipelineEngine;
+    }
+
     public List<CompletablePipe> completablePipes() {
         return Collections.unmodifiableList(completablePipes);
     }
 
-    CompletablePipe pipeAt(int pipeIndex) {
+    public CompletablePipe pipeAt(int pipeIndex) {
         return completablePipes.get(pipeIndex);
     }
 
-    CompletablePipe findPipe(String pipeName) {
+    public CompletablePipe findPipe(String pipeName) {
         return completablePipeNames.get(pipeName);
     }
 

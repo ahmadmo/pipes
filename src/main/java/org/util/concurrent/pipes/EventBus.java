@@ -19,25 +19,39 @@ package org.util.concurrent.pipes;
 /**
  * @author ahmad
  */
-public interface EventBus {
+public interface EventBus extends Controllable {
 
-    void register(String eventName, Handler<Object> handler);
+    void register(String topic, Handler<Object> handler);
 
-    void registerAsync(String eventName, Handler<Object> handler);
+    void registerAsync(String topic, Handler<Object> handler);
 
-    void register(String eventName, Handler<Object> handler, PublishMode mode);
+    void register(String topic, Handler<Object> handler, PublishMode mode);
 
-    void registerAsync(String eventName, Handler<Object> handler, PublishMode mode);
+    void registerAsync(String topic, Handler<Object> handler, PublishMode mode);
 
-    void unregister(String eventName, Handler<Object> handler);
+    void unregister(String topic, Handler<Object> handler);
 
-    void publish(String eventName, Object message);
+    void unregisterHandlers(String topic);
 
-    void publishAsync(String eventName, Object message);
+    void unregisterAllHandlers();
 
-    void publish(String eventName, Object message, PublishMode mode);
+    void publish(String topic, Object message);
 
-    void publishAsync(String eventName, Object message, PublishMode mode);
+    void publishAsync(String topic, Object message);
+
+    void publish(String topic, Object message, PublishMode mode);
+
+    void publishAsync(String topic, Object message, PublishMode mode);
+
+    void clearMessages(String topic);
+
+    void clearAllMessages();
+
+    void reset(String topic);
+
+    void resetAll();
+
+    void start();
 
     enum PublishMode {ASYNC, SERIAL}
 

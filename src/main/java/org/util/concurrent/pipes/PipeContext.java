@@ -72,4 +72,8 @@ public final class PipeContext {
         return pipelineContext.eventBus();
     }
 
+    public void startProcess() {
+        pipe.process().start(this);
+    }
+
 }

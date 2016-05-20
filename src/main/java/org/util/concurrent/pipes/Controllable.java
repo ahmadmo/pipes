@@ -16,17 +16,27 @@
 
 package org.util.concurrent.pipes;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * @author ahmad
  */
-final class Seq {
+public interface Controllable {
 
-    private static final AtomicLong C = new AtomicLong();
+    void pause();
 
-    static long next() {
-        return C.incrementAndGet();
-    }
+    boolean isPaused();
+
+    void resume();
+
+    boolean awaitAndContinue() throws InterruptedException;
+
+    boolean awaitAndContinueUninterruptibly();
+
+    void stop();
+
+    boolean isStopped();
+
+    void shutdown();
+
+    boolean isShutdown();
 
 }

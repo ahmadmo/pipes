@@ -60,6 +60,12 @@ public final class PipelineContext {
         return pipeContext(pipeline.findPipe(pipeName)).writeOnlyChannel();
     }
 
+    public void reset() {
+        dataBus.clear();
+        eventBus.resetAll();
+        pipeContexts.forEach((id, c) -> c.channel().clear());
+    }
+
     public static PipelineContext create(Pipeline pipeline) {
         return new PipelineContext(pipeline);
     }

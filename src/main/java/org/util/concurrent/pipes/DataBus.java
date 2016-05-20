@@ -19,7 +19,7 @@ package org.util.concurrent.pipes;
 /**
  * @author ahmad
  */
-public interface DataBus {
+public interface DataBus extends Controllable {
 
     Object get(String key);
 
@@ -62,5 +62,9 @@ public interface DataBus {
     long decrementAndGetLong(String key);
 
     Object remove(String key);
+
+    void clear();
+
+    void start();
 
 }

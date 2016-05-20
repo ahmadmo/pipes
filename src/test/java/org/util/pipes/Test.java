@@ -3,6 +3,7 @@ package org.util.pipes;
 import org.util.concurrent.pipes.CompletablePipe;
 import org.util.concurrent.pipes.CompletablePipeline;
 import org.util.concurrent.pipes.Pipeline;
+import org.util.concurrent.pipes.PipelineEngine;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,7 @@ public class Test {
                     c.eventBus().publish("termination", new Date());
                 })
                 .next(c -> c.eventBus().register("termination", event -> System.out.println("Termination Date : " + event)))
+                .next(c -> sleep(1, TimeUnit.SECONDS))
                 .next("consumer", c -> {
                     for (int i = 0; i < 5; i++) {
                         System.out.println(c.channel().readBlocking());
@@ -30,7 +32,9 @@ public class Test {
                 })
                 .build();
 
-        CompletablePipeline completablePipeline = pipeline.start("Test Context");
+        PipelineEngine pipelineEngine = new PipelineEngine(pipeline);
+
+        CompletablePipeline completablePipeline = pipelineEngine.start("Test Context");
 
         for (final CompletablePipe completablePipe : completablePipeline.completablePipes()) {
             completablePipe.whenComplete((v, t) -> System.out.println(completablePipe.pipe().name() + " finished its process."));

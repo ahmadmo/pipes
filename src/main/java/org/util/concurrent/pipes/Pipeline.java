@@ -17,7 +17,6 @@
 package org.util.concurrent.pipes;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author ahmad
@@ -48,43 +47,6 @@ public final class Pipeline {
 
     public int size() {
         return pipes.size();
-    }
-
-    public CompletablePipeline start() {
-        return start(false);
-    }
-
-    public CompletablePipeline start(boolean shared) {
-        return start(shared ? PipelineContext.shared(this) : PipelineContext.create(this));
-    }
-
-    public CompletablePipeline start(String contextName) {
-        return start(PipelineContext.named(this, contextName));
-    }
-
-    public CompletablePipeline start(final PipelineContext pipelineContext) {
-        List<CompletablePipe> completablePipes = new ArrayList<>();
-        Map<String, CompletablePipe> completablePipeNames = new HashMap<>();
-        for (Pipe pipe : pipes) {
-            Runnable runnable = runnable(pipe, pipelineContext.pipeContext(pipe));
-            CompletablePipe pipePromise = new CompletablePipe(pipe, pipe.isBlocking() ? Do.runSerial(runnable) : Do.runAsync(runnable));
-            completablePipes.add(pipePromise);
-            completablePipeNames.put(pipe.name(), pipePromise);
-        }
-        return new CompletablePipeline(
-                this, completablePipes, completablePipeNames,
-                Do.combine(completablePipes.stream().map(Completable::future).collect(Collectors.toList()))
-        );
-    }
-
-    private static Runnable runnable(final Pipe pipe, final PipeContext pipeContext) {
-        return () -> {
-            try {
-                pipe.process().start(pipeContext);
-            } catch (Throwable cause) {
-                throw new PipeException(cause, pipeContext);
-            }
-        };
     }
 
     @Override

@@ -23,48 +23,62 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author ahmad
  */
-final class DataBusImpl implements DataBus {
+final class DataBusImpl extends AbstractControllable implements DataBus {
 
     private final ConcurrentMap<String, Object> map = new ConcurrentHashMap<>();
 
+    DataBusImpl() {
+        super("DataBus");
+    }
+
     @Override
     public Object get(String key) {
+        checkShutdown();
         return map.get(key);
     }
 
     @Override
     public <T> T get(String key, Class<T> type) {
+        checkShutdown();
         return type.cast(map.get(key));
     }
 
     @Override
     public boolean contains(String key) {
+        checkShutdown();
         return map.containsKey(key);
     }
 
     @Override
     public <T> boolean contains(String key, Class<T> type) {
+        checkShutdown();
         return type.isInstance(map.get(key));
     }
 
     @Override
     public boolean contains(String key, Object value) {
+        checkShutdown();
         return Objects.equals(map.get(key), value);
     }
 
     @Override
     public <T> boolean contains(String key, Class<T> type, T expected) {
+        checkShutdown();
         Object value = map.get(key);
         return type.isInstance(value) && Objects.equals(value, expected);
     }
 
     @Override
     public Object set(String key, Object value) {
+        checkShutdown();
+        checkStopped();
         return map.put(key, value);
     }
 
     @Override
     public boolean compareAndSet(String key, final Object expected, final Object update) {
+        checkShutdown();
+        checkStopped();
         return map.replace(key, expected, update);
     }
 
@@ -138,7 +152,28 @@ final class DataBusImpl implements DataBus {
 
     @Override
     public Object remove(String key) {
+        checkShutdown();
         return map.remove(key);
+    }
+
+    @Override
+    public void clear() {
+        map.clear();
+    }
+
+    @Override
+    public void start() {
+        start(1);
+    }
+
+    @Override
+    Object doStart(Object... args) {
+        return null;
+    }
+
+    @Override
+    void doShutdown() {
+        // nothing to do here!
     }
 
 }

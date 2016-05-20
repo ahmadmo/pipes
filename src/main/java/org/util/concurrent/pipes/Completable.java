@@ -23,7 +23,7 @@ import java.util.function.Function;
 /**
  * @author ahmad
  */
-abstract class Completable<T extends Completable<T>> {
+public abstract class Completable<T extends Completable<T>> {
 
     private final CompletableFuture<Void> future;
     private final T t;
