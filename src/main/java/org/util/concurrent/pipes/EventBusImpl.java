@@ -16,13 +16,11 @@
 
 package org.util.concurrent.pipes;
 
-import org.util.concurrent.futures.Do;
-import org.util.concurrent.futures.Promise;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -99,11 +97,11 @@ final class EventBusImpl implements EventBus {
         private final Lock w = lock.writeLock();
 
         private void addHandler(final Handler<Object> handler, final PublishMode mode, boolean async) {
-            List<Promise<Void>> promises = async ? null : new ArrayList<>();
+            List<CompletableFuture<Void>> futures = async ? null : new ArrayList<>();
             r.lock();
             try {
                 if (async) for (Object message : topic) send(handler, message, mode);
-                else promises.addAll(topic.stream()
+                else futures.addAll(topic.stream()
                         .map(message -> sendWithPromise(handler, message, mode))
                         .collect(Collectors.toList())
                 );
@@ -111,8 +109,8 @@ final class EventBusImpl implements EventBus {
             } finally {
                 r.unlock();
             }
-            if (!async && !promises.isEmpty()) {
-                Do.combine(promises).join();
+            if (!async && !futures.isEmpty()) {
+                Do.combine(futures).join();
             }
         }
 
@@ -121,11 +119,11 @@ final class EventBusImpl implements EventBus {
         }
 
         private void publish(final Object message, final PublishMode mode, boolean async) {
-            List<Promise<Void>> promises = async ? null : new ArrayList<>();
+            List<CompletableFuture<Void>> futures = async ? null : new ArrayList<>();
             w.lock();
             try {
                 if (async) for (Handler<Object> handler : handlers) send(handler, message, mode);
-                else promises.addAll(handlers.stream()
+                else futures.addAll(handlers.stream()
                         .map(handler -> sendWithPromise(handler, message, mode))
                         .collect(Collectors.toList())
                 );
@@ -133,8 +131,8 @@ final class EventBusImpl implements EventBus {
             } finally {
                 w.unlock();
             }
-            if (!async && !promises.isEmpty()) {
-                Do.combine(promises).join();
+            if (!async && !futures.isEmpty()) {
+                Do.combine(futures).join();
             }
         }
 
@@ -149,7 +147,7 @@ final class EventBusImpl implements EventBus {
             }
         }
 
-        private Promise<Void> sendWithPromise(final Handler<Object> handler, final Object message, PublishMode mode) {
+        private CompletableFuture<Void> sendWithPromise(final Handler<Object> handler, final Object message, PublishMode mode) {
             switch (mode) {
                 case ASYNC:
                     return Do.runAsync(() -> handler.handle(message));

@@ -1,8 +1,8 @@
 package org.util.pipes;
 
-import org.util.concurrent.pipes.PipeFuture;
+import org.util.concurrent.pipes.CompletablePipe;
+import org.util.concurrent.pipes.CompletablePipeline;
 import org.util.concurrent.pipes.Pipeline;
-import org.util.concurrent.pipes.PipelineFuture;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -30,13 +30,13 @@ public class Test {
                 })
                 .build();
 
-        PipelineFuture pipelineFuture = pipeline.start("Test Context");
+        CompletablePipeline completablePipeline = pipeline.start("Test Context");
 
-        for (final PipeFuture pipeFuture : pipelineFuture.pipeFutures()) {
-            pipeFuture.whenComplete((v, t) -> System.out.println(pipeFuture.pipe().name() + " finished its process."));
+        for (final CompletablePipe completablePipe : completablePipeline.completablePipes()) {
+            completablePipe.whenComplete((v, t) -> System.out.println(completablePipe.pipe().name() + " finished its process."));
         }
 
-        pipelineFuture.whenComplete((v, t) -> System.out.println("Done.")).join();
+        completablePipeline.whenComplete((v, t) -> System.out.println("Done.")).join();
     }
 
     private static void sleep(long timeout, TimeUnit unit) {

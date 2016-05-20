@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.util.concurrent.futures;
+package org.util.concurrent.pipes;
 
 import java.util.ArrayDeque;
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 /**
  * @author ahmad
  */
-public final class Do {
+final class Do {
 
     private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = Executors.defaultThreadFactory();
@@ -68,53 +68,58 @@ public final class Do {
 
     }
 
-    public static void executeSerial(Runnable runnable) {
+    static void executeSerial(Runnable runnable) {
         SERIAL_EXECUTOR.execute(runnable);
     }
 
-    public static void executeAsync(Runnable runnable) {
+    static void executeAsync(Runnable runnable) {
         THREAD_POOL_EXECUTOR.execute(runnable);
     }
 
-    public static Promise<Void> runSerial(Runnable runnable) {
-        return new PromiseImpl<>(CompletableFuture.runAsync(runnable, SERIAL_EXECUTOR));
+    static CompletableFuture<Void> runSerial(Runnable runnable) {
+        return CompletableFuture.runAsync(runnable, SERIAL_EXECUTOR);
     }
 
-    public static Promise<Void> runAsync(Runnable runnable) {
-        return new PromiseImpl<>(CompletableFuture.runAsync(runnable, THREAD_POOL_EXECUTOR));
+    static CompletableFuture<Void> runAsync(Runnable runnable) {
+        return CompletableFuture.runAsync(runnable, THREAD_POOL_EXECUTOR);
     }
 
-    public static <V> Promise<V> supplySerial(Supplier<V> supplier) {
-        return new PromiseImpl<>(CompletableFuture.supplyAsync(supplier, SERIAL_EXECUTOR));
+    public static <V> CompletableFuture<V> supplySerial(Supplier<V> supplier) {
+        return CompletableFuture.supplyAsync(supplier, SERIAL_EXECUTOR);
     }
 
-    public static <V> Promise<V> supplyAsync(Supplier<V> supplier) {
-        return new PromiseImpl<>(CompletableFuture.supplyAsync(supplier, THREAD_POOL_EXECUTOR));
+    public static <V> CompletableFuture<V> supplyAsync(Supplier<V> supplier) {
+        return CompletableFuture.supplyAsync(supplier, THREAD_POOL_EXECUTOR);
     }
 
-    public static <V> Promise<V> combine(List<? extends Promise<? extends V>> promises,
-                                         BiFunction<? super V, ? super V, ? extends V> combiner) {
-        if (promises.isEmpty()) {
-            return new PromiseImpl<>(new CompletableFuture<>());
+    @SuppressWarnings("unchecked")
+    static <V> CompletableFuture<V> combine(List<? extends CompletableFuture<? extends V>> futures,
+                                            BiFunction<? super V, ? super V, ? extends V> combiner) {
+        if (futures.isEmpty()) {
+            return new CompletableFuture<>();
         }
-        CompletableFuture<V> future = null;
-        for (Promise<? extends V> promise : promises) {
-            @SuppressWarnings("unchecked")
-            CompletableFuture<V> d = ((PromiseImpl) promise).delegate;
-            future = future == null ? d : future.thenCombine(d, combiner);
+        final CompletableFuture[] future = {null};
+        for (CompletableFuture<? extends V> c : futures) {
+            future[0] = future[0] == null ? c : future[0].thenCombine(c, combiner);
         }
-        return new PromiseImpl<>(future);
+        for (CompletableFuture<? extends V> c : futures) {
+            c.exceptionally(ex -> {
+                future[0].completeExceptionally(ex);
+                return null;
+            });
+        }
+        return future[0];
     }
 
-    public static Promise<Void> combine(List<? extends Promise<? extends Void>> promises) {
-        if (promises.isEmpty()) {
-            return new PromiseImpl<>(new CompletableFuture<>());
+    static CompletableFuture<Void> combine(List<? extends CompletableFuture<? extends Void>> futures) {
+        final CompletableFuture<Void> future = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
+        for (CompletableFuture<?> child : futures) {
+            child.exceptionally(ex -> {
+                future.completeExceptionally(ex);
+                return null;
+            });
         }
-        CompletableFuture[] futures = new CompletableFuture[promises.size()];
-        for (int i = 0, n = promises.size(); i < n; i++) {
-            futures[i] = ((PromiseImpl) promises.get(i)).delegate;
-        }
-        return new PromiseImpl<>(CompletableFuture.allOf(futures));
+        return future;
     }
 
 }

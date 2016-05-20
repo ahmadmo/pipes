@@ -16,30 +16,22 @@
 
 package org.util.concurrent.pipes;
 
-import org.util.concurrent.futures.Promise;
-
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author ahmad
  */
-public interface PipelinePromise extends PipelineFuture, Promise<Void> {
+public final class CompletablePipe extends Completable<CompletablePipe> {
 
-    @Override
-    List<PipePromise> pipeFutures();
+    private final Pipe pipe;
 
-    @Override
-    PipePromise pipeFutureAt(int pipeIndex);
+    CompletablePipe(Pipe pipe, CompletableFuture<Void> future) {
+        super(future);
+        this.pipe = pipe;
+    }
 
-    @Override
-    PipePromise findPipeFuture(String pipeName);
-
-    @Override
-    PipelinePromise whenComplete(BiConsumer<? super Void, ? super Throwable> action);
-
-    @Override
-    PipelinePromise exceptionally(Function<Throwable, ? extends Void> function);
+    public Pipe pipe() {
+        return pipe;
+    }
 
 }

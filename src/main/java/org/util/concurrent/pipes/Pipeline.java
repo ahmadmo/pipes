@@ -16,29 +16,22 @@
 
 package org.util.concurrent.pipes;
 
-import org.util.concurrent.futures.Do;
-
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author ahmad
  */
 public final class Pipeline {
 
-    private static final Handler<PipeException> DEFAULT_EXCEPTION_HANDLER = e -> {
-        throw e;
-    };
-
     final long id = Seq.next();
 
     private final List<Pipe> pipes;
     private final Map<String, Pipe> pipeNames;
-    private final Handler<PipeException> exceptionHandler;
 
-    private Pipeline(List<Pipe> pipes, Map<String, Pipe> pipeNames, Handler<PipeException> exceptionHandler) {
+    private Pipeline(List<Pipe> pipes, Map<String, Pipe> pipeNames) {
         this.pipes = pipes;
         this.pipeNames = pipeNames;
-        this.exceptionHandler = exceptionHandler == null ? DEFAULT_EXCEPTION_HANDLER : exceptionHandler;
     }
 
     public List<Pipe> pipes() {
@@ -57,37 +50,39 @@ public final class Pipeline {
         return pipes.size();
     }
 
-    public PipelineFuture start() {
+    public CompletablePipeline start() {
         return start(false);
     }
 
-    public PipelineFuture start(boolean shared) {
+    public CompletablePipeline start(boolean shared) {
         return start(shared ? PipelineContext.shared(this) : PipelineContext.create(this));
     }
 
-    public PipelineFuture start(String contextName) {
+    public CompletablePipeline start(String contextName) {
         return start(PipelineContext.named(this, contextName));
     }
 
-    public PipelineFuture start(final PipelineContext pipelineContext) {
-        List<PipePromise> pipePromises = new ArrayList<>();
-        Map<String, PipePromise> pipePromiseNames = new HashMap<>();
+    public CompletablePipeline start(final PipelineContext pipelineContext) {
+        List<CompletablePipe> completablePipes = new ArrayList<>();
+        Map<String, CompletablePipe> completablePipeNames = new HashMap<>();
         for (Pipe pipe : pipes) {
-            Runnable runnable = runnable(pipe, pipelineContext);
-            PipePromise pipePromise = new PipePromiseImpl(pipe, pipe.isBlocking() ? Do.runSerial(runnable) : Do.runAsync(runnable));
-            pipePromises.add(pipePromise);
-            pipePromiseNames.put(pipe.name(), pipePromise);
+            Runnable runnable = runnable(pipe, pipelineContext.pipeContext(pipe));
+            CompletablePipe pipePromise = new CompletablePipe(pipe, pipe.isBlocking() ? Do.runSerial(runnable) : Do.runAsync(runnable));
+            completablePipes.add(pipePromise);
+            completablePipeNames.put(pipe.name(), pipePromise);
         }
-        return new PipelinePromiseImpl(this, pipePromises, pipePromiseNames);
+        return new CompletablePipeline(
+                this, completablePipes, completablePipeNames,
+                Do.combine(completablePipes.stream().map(Completable::future).collect(Collectors.toList()))
+        );
     }
 
-    private Runnable runnable(Pipe pipe, PipelineContext pipelineContext) {
-        final PipeContext pipeContext = pipelineContext.pipeContext(pipe);
+    private static Runnable runnable(final Pipe pipe, final PipeContext pipeContext) {
         return () -> {
             try {
                 pipe.process().start(pipeContext);
             } catch (Throwable cause) {
-                exceptionHandler.handle(new PipeException(cause, pipeContext));
+                throw new PipeException(cause, pipeContext);
             }
         };
     }
@@ -118,7 +113,6 @@ public final class Pipeline {
 
         private final List<Pipe> pipes = new ArrayList<>();
         private final Map<String, Pipe> pipeNames = new HashMap<>();
-        private Handler<PipeException> exceptionHandler;
 
         public Builder next(Process process) {
             return next("pipe-" + pipes.size(), process);
@@ -145,13 +139,8 @@ public final class Pipeline {
             return this;
         }
 
-        public Builder exceptionHandler(Handler<PipeException> exceptionHandler) {
-            this.exceptionHandler = exceptionHandler;
-            return this;
-        }
-
         public Pipeline build() {
-            return new Pipeline(pipes, pipeNames, exceptionHandler);
+            return new Pipeline(pipes, pipeNames);
         }
 
     }
