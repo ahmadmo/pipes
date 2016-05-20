@@ -23,14 +23,20 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author ahmad
  */
-final class OneWayChannel implements Channel {
+public final class OneWayChannel implements Channel {
 
     private final Channel delegate;
-    private final AccessMode mode;
+    private final AccessMode accessMode;
 
-    OneWayChannel(Channel delegate, AccessMode mode) {
+    public enum AccessMode {READ_ONLY, WRITE_ONLY}
+
+    OneWayChannel(Channel delegate, AccessMode accessMode) {
         this.delegate = delegate;
-        this.mode = mode;
+        this.accessMode = accessMode;
+    }
+
+    public AccessMode getAccessMode() {
+        return accessMode;
     }
 
     @Override
@@ -107,11 +113,9 @@ final class OneWayChannel implements Channel {
     }
 
     private void checkAccess(AccessMode requested) {
-        if (mode != requested) {
-            throw new UnsupportedOperationException((mode == AccessMode.READ_ONLY ? "Read" : "Write") + "Only Channel");
+        if (accessMode != requested) {
+            throw new UnsupportedOperationException((accessMode == AccessMode.READ_ONLY ? "Read" : "Write") + "Only Channel");
         }
     }
-
-    enum AccessMode {READ_ONLY, WRITE_ONLY}
 
 }
