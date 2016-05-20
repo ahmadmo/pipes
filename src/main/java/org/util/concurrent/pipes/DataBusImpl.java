@@ -162,13 +162,8 @@ final class DataBusImpl extends AbstractControllable implements DataBus {
     }
 
     @Override
-    public void start() {
-        start(1);
-    }
-
-    @Override
     Object doStart(Object... args) {
-        return null;
+        return args;
     }
 
     @Override

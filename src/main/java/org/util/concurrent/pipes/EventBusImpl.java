@@ -131,13 +131,8 @@ final class EventBusImpl extends AbstractControllable implements EventBus {
     }
 
     @Override
-    public void start() {
-        start(1);
-    }
-
-    @Override
     Object doStart(Object... args) {
-        return null;
+        return args;
     }
 
     @Override

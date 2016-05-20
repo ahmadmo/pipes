@@ -51,8 +51,6 @@ public interface EventBus extends Controllable {
 
     void resetAll();
 
-    void start();
-
     enum PublishMode {ASYNC, SERIAL}
 
 }

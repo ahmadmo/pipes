@@ -25,12 +25,18 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author ahmad
  */
-final class ConcurrentChannel implements Channel {
+final class ConcurrentChannel extends AbstractControllable implements Channel {
 
     private final BlockingQueue<Object> messages = new LinkedBlockingQueue<>();
 
+    ConcurrentChannel() {
+        super("Channel");
+    }
+
     @Override
     public boolean write(Object message) {
+        checkShutdown();
+        checkStopped();
         return messages.offer(message);
     }
 
@@ -54,11 +60,15 @@ final class ConcurrentChannel implements Channel {
 
     @Override
     public Object read() {
+        checkShutdown();
+        checkStopped();
         return messages.poll();
     }
 
     @Override
     public Object readBlocking(long timeout, TimeUnit unit) {
+        checkShutdown();
+        checkStopped();
         try {
             return messages.poll(timeout, unit);
         } catch (InterruptedException e) {
@@ -68,6 +78,8 @@ final class ConcurrentChannel implements Channel {
 
     @Override
     public Object readBlocking() {
+        checkShutdown();
+        checkStopped();
         try {
             return messages.take();
         } catch (InterruptedException e) {
@@ -77,21 +89,25 @@ final class ConcurrentChannel implements Channel {
 
     @Override
     public Object peek() {
+        checkShutdown();
         return messages.peek();
     }
 
     @Override
     public Iterator<Object> iterator() {
+        checkShutdown();
         return messages.iterator();
     }
 
     @Override
     public int size() {
+        checkShutdown();
         return messages.size();
     }
 
     @Override
     public boolean isEmpty() {
+        checkShutdown();
         return messages.isEmpty();
     }
 
@@ -110,5 +126,14 @@ final class ConcurrentChannel implements Channel {
         return new OneWayChannel(this, OneWayChannel.AccessMode.WRITE_ONLY);
     }
 
+    @Override
+    Object doStart(Object... args) {
+        return args;
+    }
+
+    @Override
+    void doShutdown() {
+        // nothing to do here!
+    }
 
 }

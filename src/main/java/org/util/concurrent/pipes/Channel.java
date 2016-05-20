@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author ahmad
  */
-public interface Channel {
+public interface Channel extends Controllable {
 
     boolean write(Object message);
 

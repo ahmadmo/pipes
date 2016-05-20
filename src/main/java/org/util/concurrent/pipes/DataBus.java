@@ -65,6 +65,4 @@ public interface DataBus extends Controllable {
 
     void clear();
 
-    void start();
-
 }

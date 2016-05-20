@@ -21,6 +21,8 @@ package org.util.concurrent.pipes;
  */
 public interface Controllable {
 
+    Object start();
+
     void pause();
 
     boolean isPaused();

@@ -35,6 +35,11 @@ abstract class AbstractControllable extends ReadWriteLockContainer implements Co
         this.name = name;
     }
 
+    @Override
+    public Object start() {
+        return start(true);
+    }
+
     Object start(Object... args) {
         return acquireReadLock(() -> {
             checkShutdown();

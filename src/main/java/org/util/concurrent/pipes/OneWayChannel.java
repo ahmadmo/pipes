@@ -112,6 +112,56 @@ public final class OneWayChannel implements Channel {
         throw new UnsupportedOperationException("OneWay Channel");
     }
 
+    @Override
+    public Object start() {
+        return delegate.start();
+    }
+
+    @Override
+    public void pause() {
+        delegate.pause();
+    }
+
+    @Override
+    public boolean isPaused() {
+        return delegate.isPaused();
+    }
+
+    @Override
+    public void resume() {
+        delegate.resume();
+    }
+
+    @Override
+    public boolean awaitAndContinue() throws InterruptedException {
+        return delegate.awaitAndContinue();
+    }
+
+    @Override
+    public boolean awaitAndContinueUninterruptibly() {
+        return delegate.awaitAndContinueUninterruptibly();
+    }
+
+    @Override
+    public void stop() {
+        delegate.stop();
+    }
+
+    @Override
+    public boolean isStopped() {
+        return delegate.isStopped();
+    }
+
+    @Override
+    public void shutdown() {
+        delegate.shutdown();
+    }
+
+    @Override
+    public boolean isShutdown() {
+        return delegate.isShutdown();
+    }
+
     private void checkAccess(AccessMode requested) {
         if (accessMode != requested) {
             throw new UnsupportedOperationException((accessMode == AccessMode.READ_ONLY ? "Read" : "Write") + "Only Channel");
