@@ -27,34 +27,33 @@ import java.util.stream.Collectors;
  */
 public final class PipelineEngine extends AbstractControllable {
 
-    private final Pipeline pipeline;
     private final ThreadPool pool = new ThreadPool();
 
-    public PipelineEngine(Pipeline pipeline) {
+    public PipelineEngine() {
         super("PipelineEngine");
-        this.pipeline = pipeline;
     }
 
-    public CompletablePipeline start() {
-        return start(false);
+    public CompletablePipeline start(Pipeline pipeline) {
+        return start(pipeline, false);
     }
 
-    public CompletablePipeline start(boolean shared) {
-        return start(shared, null);
+    public CompletablePipeline start(Pipeline pipeline, boolean shared) {
+        return start(pipeline, shared, null);
     }
 
-    public CompletablePipeline start(String contextName) {
-        return start(false, contextName);
+    public CompletablePipeline start(Pipeline pipeline, String contextName) {
+        return start(pipeline, false, contextName);
     }
 
-    private CompletablePipeline start(boolean shared, String contextName) {
-        return (CompletablePipeline) start(new Object[]{shared, contextName});
+    private CompletablePipeline start(Pipeline pipeline, boolean shared, String contextName) {
+        return (CompletablePipeline) start(new Object[]{pipeline, shared, contextName});
     }
 
     @Override
     Object doStart(Object... args) {
-        boolean shared = (boolean) args[0];
-        String contextName = (String) args[1];
+        Pipeline pipeline = (Pipeline) args[0];
+        boolean shared = (boolean) args[1];
+        String contextName = (String) args[2];
         final PipelineContext pipelineContext = shared ? PipelineContext.shared(pipeline)
                 : contextName == null ? PipelineContext.create(pipeline)
                 : PipelineContext.named(pipeline, contextName);

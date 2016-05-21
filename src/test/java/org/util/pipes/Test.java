@@ -31,9 +31,9 @@ public class Test {
                 })
                 .build();
 
-        PipelineEngine pipelineEngine = new PipelineEngine(pipeline);
+        PipelineEngine pipelineEngine = new PipelineEngine();
 
-        CompletablePipeline completablePipeline = pipelineEngine.start("Test Context");
+        CompletablePipeline completablePipeline = pipelineEngine.start(pipeline, "Test Context");
 
         for (final CompletablePipe completablePipe : completablePipeline.completablePipes()) {
             completablePipe.whenComplete((v, t) -> System.out.println(completablePipe.pipe().name() + " finished its process."));

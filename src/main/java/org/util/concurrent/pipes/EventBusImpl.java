@@ -152,13 +152,11 @@ final class EventBusImpl extends AbstractControllable implements EventBus {
         private void addHandler(final Handler<Object> handler, final PublishMode mode, boolean async) {
             List<CompletableFuture<Void>> futures = async ? null : new ArrayList<>();
             acquireReadLock(() -> {
-                if (!isPaused()) {
-                    if (async) for (Object message : messages) send(handler, message, mode);
-                    else futures.addAll(messages.stream()
-                            .map(message -> sendWithPromise(handler, message, mode))
-                            .collect(Collectors.toList())
-                    );
-                }
+                if (async) for (Object message : messages) send(handler, message, mode);
+                else futures.addAll(messages.stream()
+                        .map(message -> sendWithPromise(handler, message, mode))
+                        .collect(Collectors.toList())
+                );
                 handlers.add(handler);
             });
             if (!async && !futures.isEmpty()) {
@@ -177,13 +175,11 @@ final class EventBusImpl extends AbstractControllable implements EventBus {
         private void publish(final Object message, final PublishMode mode, boolean async) {
             List<CompletableFuture<Void>> futures = async ? null : new ArrayList<>();
             acquireWriteLock(() -> {
-                if (!isPaused()) {
-                    if (async) for (Handler<Object> handler : handlers) send(handler, message, mode);
-                    else futures.addAll(handlers.stream()
-                            .map(handler -> sendWithPromise(handler, message, mode))
-                            .collect(Collectors.toList())
-                    );
-                }
+                if (async) for (Handler<Object> handler : handlers) send(handler, message, mode);
+                else futures.addAll(handlers.stream()
+                        .map(handler -> sendWithPromise(handler, message, mode))
+                        .collect(Collectors.toList())
+                );
                 messages.offer(message);
             });
             if (!async && !futures.isEmpty()) {
