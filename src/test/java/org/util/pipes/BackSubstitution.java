@@ -96,11 +96,11 @@ public class BackSubstitution {
 
                 for (int j = 0; j <= i; j++) {
                     System.out.print("a[" + (j + 1) + "] = ");
-                    a[i][j] = scanner.nextInt();
+                    a[i][j] = scanner.nextLong();
                 }
 
                 System.out.print("b = ");
-                b[i] = scanner.nextInt();
+                b[i] = scanner.nextLong();
 
                 System.out.println("\n" + equationToString(i) + "\n----------------------------------------");
             }
