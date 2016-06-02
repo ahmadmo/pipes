@@ -15,8 +15,8 @@ import java.util.stream.IntStream;
 public class BackSubstitution {
 
     private static int n;
-    private static int a[][];
-    private static int b[];
+    private static long a[][];
+    private static long b[];
     private static double x[];
 
     public static void main(String[] args) {
@@ -55,7 +55,7 @@ public class BackSubstitution {
         IntStream.range(0, n).forEach(i -> pb.nextAsync(equationSolver));
         Pipeline pipeline = pb.build();
 
-        System.out.print("Computing `x` values... ");
+        System.out.print("Computing \'x\' values... ");
 
         // Start calculation...
         PipelineEngine engine = new PipelineEngine();
@@ -79,8 +79,12 @@ public class BackSubstitution {
             System.out.print("Enter number of equations : ");
             n = scanner.nextInt();
 
-            a = new int[n][];
-            b = new int[n];
+            if (n < 1) {
+                throw new AssertionError("You must enter a positive integer.");
+            }
+
+            a = new long[n][];
+            b = new long[n];
             x = new double[n];
 
             System.out.println("----------------------------------------");
@@ -88,7 +92,7 @@ public class BackSubstitution {
             for (int i = 0; i < n; i++) {
                 System.out.println("Initializing equation #" + (i + 1) + " =>");
 
-                a[i] = new int[i + 1];
+                a[i] = new long[i + 1];
 
                 for (int j = 0; j <= i; j++) {
                     System.out.print("a[" + (j + 1) + "] = ");
@@ -107,8 +111,7 @@ public class BackSubstitution {
     private static String equationToString(int n) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0, len = a[n].length; i < len; i++) {
-            int aValue = a[n][i];
-            sb.append(aValue < 0 ? "(" + aValue + ")" : aValue).append(" x[").append(i + 1).append("] + ");
+            sb.append('(').append(a[n][i]).append(')').append(" x[").append(i + 1).append("] + ");
         }
         sb.setCharAt(sb.length() - 2, '=');
         sb.append(b[n]);
@@ -120,7 +123,16 @@ public class BackSubstitution {
 
         int maxWidth = 0;
         for (double xValue : x) {
-            String xString = BigDecimal.valueOf(xValue).stripTrailingZeros().toPlainString();
+            String xString;
+            if (xValue == Double.POSITIVE_INFINITY) {
+                xString = "Infinity";
+            } else if (xValue == Double.NEGATIVE_INFINITY) {
+                xString = "-Infinity";
+            } else if (xValue != xValue) {
+                xString = "NaN";
+            } else {
+                xString = BigDecimal.valueOf(xValue).stripTrailingZeros().toPlainString();
+            }
             xValues.add(xString);
             maxWidth = Math.max(maxWidth, xString.length());
         }
