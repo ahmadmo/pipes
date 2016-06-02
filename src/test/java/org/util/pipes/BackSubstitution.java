@@ -31,7 +31,7 @@ public class BackSubstitution {
                 c.dataBus().set("start", System.nanoTime());
             }
 
-            long sum = 0;
+            double sum = 0;
             double xValue;
 
             for (int j = 0; j < i; j++) {
@@ -41,7 +41,7 @@ public class BackSubstitution {
                 }
                 sum += a[i][j] * xValue;
             }
-            x[i] = (double) (b[i] - sum) / a[i][i];
+            x[i] = (b[i] - sum) / a[i][i];
 
             if (i < n - 1) {
                 c.writeToChannel(i + 1, x[i]);
