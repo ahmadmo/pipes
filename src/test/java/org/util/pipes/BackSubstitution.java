@@ -31,7 +31,7 @@ public class BackSubstitution {
                 c.dataBus().set("start", System.nanoTime());
             }
 
-            int sum = 0;
+            long sum = 0;
             double xValue;
 
             for (int j = 0; j < i; j++) {
